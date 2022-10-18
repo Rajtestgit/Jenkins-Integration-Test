@@ -1,0 +1,19 @@
+---
+- hosts: webserver
+  become: yes
+  gather_facts: false
+  tasks:
+    - name: Deploy maven built war file
+      copy:
+        src: ./target/LoginWebApp-1.war
+        dest: /opt/tomcat10/webapps/
+        owner: tomcat
+        group: tomcat
+        mode: u=rw,g=r,o=r
+      notify: restart tomcat
+
+  handlers:
+    - name: restart tomcat
+      service:
+        name: tomcat
+        state: restarted
