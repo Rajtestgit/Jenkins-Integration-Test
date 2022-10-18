@@ -28,6 +28,6 @@ The following things to be kept in check:
 3. Document the step-by-step process starting from creating test cases, the executing it, and recording the results.
 4. You need to submit the final specification document, which includes:
 
-	Project and tester details
-	Concepts used in the project
-	Links to the GitHub repository to verify the project completion
+> Project and tester details
+> Concepts used in the project
+> Links to the GitHub repository to verify the project completion
