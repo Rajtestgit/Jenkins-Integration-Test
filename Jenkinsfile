@@ -1,73 +1,40 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-   <modelVersion>4.0.0</modelVersion>
-   <groupId>com.simplilearn.rajendra</groupId>
-   <artifactId>LoginWebApp</artifactId>
-   <packaging>war</packaging>
-   <version>1</version>
-   <name>LoginWebApp Maven Webapp</name>
-   <url>http://maven.apache.org</url>
-   <dependencies>
-      <dependency>
-         <groupId>javax.servlet</groupId>
-         <artifactId>servlet-api</artifactId>
-         <version>2.5</version>
-      </dependency>
-      <dependency>
-         <groupId>mysql</groupId>
-         <artifactId>mysql-connector-java</artifactId>
-         <version>5.1.30</version>
-      </dependency>
-   </dependencies>
-   <build>
-      <pluginManagement>
-         <plugins>
-            <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-jar-plugin</artifactId>
-               <version>2.4</version>
-            </plugin>
-            <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-war-plugin</artifactId>
-               <version>2.4</version>
-            </plugin>
-            <plugin>
-               <groupId>org.apache.maven.plugins</groupId>
-               <artifactId>maven-source-plugin</artifactId>
-               <version>2.1.2</version>
-            </plugin>
-         </plugins>
-      </pluginManagement>
-      <plugins>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-jar-plugin</artifactId>
-            <configuration>
-               <archive>
-                  <addMavenDescriptor>false</addMavenDescriptor>
-               </archive>
-            </configuration>
-         </plugin>
-         <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-war-plugin</artifactId>
-            <configuration>
-               <archive>
-                  <addMavenDescriptor>false</addMavenDescriptor>
-               </archive>
-            </configuration>
-         </plugin>
-      </plugins>
-   </build>
-   <repositories>
-      <repository>
-         <snapshots>
-            <enabled>false</enabled>
-         </snapshots>
-         <id>central</id>
-         <name>bintray</name>
-         <url>https://jcenter.bintray.com</url>
-      </repository>
-   </repositories>
-</project>
+pipeline {
+    agent any
+    tools{
+        maven 'maven_3_5_0'
+    }
+    stages{
+        stage('Build Maven'){
+            steps{
+                checkout([$class: 'GitSCM', branches: [[name: '*/main']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/Rajtestgit/Jenkins-Integration-Test']]])
+                sh 'mvn clean install'
+            }
+        }
+        environment {
+ DOCKERHUB_CREDENTIALS=credentials('dockerhub-credentials')
+ }
+ stages {
+ stage('Build') {
+ steps {
+ sh 'mvn install'
+ sh 'docker build -t $DOCKERHUB_CREDENTIALS_USR/java-jenkins:latest .'
+ }
+ }
+ stage('Login') {
+ steps {
+ sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR -
+-password-stdin'
+ }
+ }
+ stage('Push') {
+ steps {
+ sh 'docker push $DOCKERHUB_CREDENTIALS_USR/java-jenkins:latest'
+ }
+ }
+ }
+ post {
+ always {
+ sh 'docker logout'
+ }
+ }
+}
