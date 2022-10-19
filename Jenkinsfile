@@ -1,30 +1,21 @@
-pipeline{
- agent any
- environment {
- DOCKERHUB_CREDENTIALS=credentials('dockerhub-credentials')
- }
- stages {
- stage('Build') {
- steps {
- sh 'mvn install'
- sh 'docker build -t $DOCKERHUB_CREDENTIALS_USR/java-jenkins:latest .'
- }
- }
- stage('Login') {
- steps {
- sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR -password-stdin'
- }
- }
- stage('Push') {
- steps {
- sh 'docker push $DOCKERHUB_CREDENTIALS_USR/java-jenkins:latest'
- }
- }
- }
- post {
- always {
- sh 'docker logout'
- }
- }
-}
-
+pipeline {
+    agent any
+    
+    tools {
+       maven "Maven"
+       git "Default"
+    }
+     
+    stages {
+       stage('Execute Maven') {
+          steps {
+             sh 'mvn package'             
+          }
+       }
+         
+       stage('Ansible Deploy') {
+          steps {
+              ansiblePlaybook credentialsId:'ANSIBLE_SSH_KEY',disableHostKeyChecking:true,installation:'Ansible',inventory:'hosts.yml',playbook:'main.yml'
+          }
+       }
+    }
